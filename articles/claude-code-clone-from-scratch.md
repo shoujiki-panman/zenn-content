@@ -69,7 +69,29 @@ Claude Codeで毎日見ている「実行していい？」。あれが無い世
 
 ## 確認は、多すぎても守りにならない
 
-許可の壁を作った直後に、自分でひとつ気づきました。何度も聞かれると、中身を読まずに `y` を連打しはじめる。
+Claude Codeの「実行していい？」の正体は、これだけです。
+
+```ts
+async function askPermission(question: string): Promise<boolean> {
+  const answer = await rl.question(`${question} (y/n) `);
+  return answer.trim().toLowerCase() === "y";
+}
+
+const DANGEROUS = new Set(["write_file", "run_command"]);
+
+async function executeTool(name: string, input: any): Promise<string> {
+  if (
+    DANGEROUS.has(name) &&
+    !(await askPermission(`${name} を実行していい？ ${JSON.stringify(input)}`))
+  ) {
+    return "ユーザーが拒否しました";
+  }
+  // …ここから先が実際の実行
+```
+
+見どころは3つあります。**`=== "y"` なので、空Enterも「Y」以外の打ち間違いも全部いいえになる**こと。取り消せない道具（書き込みとコマンド実行）だけを `DANGEROUS` に入れて、読む系は素通しにしていること。そして拒否したとき例外で落とさず、文字列でAIに返していることです。3つ目のおかげで、断られたAIはループの中で別案を考えられます。断ることが会話の一部になる。
+
+その壁を作った直後に、自分でひとつ気づきました。何度も聞かれると、中身を読まずに `y` を連打しはじめる。
 
 確認画面の意味は、書き込む中身を見てから押せることにあります。パスが `.env` だったら `n` を押せる。でも押す前に読まなくなったら、壁は形だけになる。
 
@@ -130,7 +152,35 @@ Claude Codeで毎日見ている「実行していい？」。あれが無い世
 
 ただ、これはプロンプトで書いた防御です。さっきの分け方でいえば運の側で、破られないとは言えません。だから教材はこれ1枚で済ませず、砂場の囲い、危険なコマンドの拒否、許可の壁を、別々に積ませます。
 
-どれも単体では抜けます。実際、囲いが効くのはファイルを読み書きする道具までで、`run_command` は通りません。作業フォルダの中で走らせているだけなので、`cat ../../秘密` のような書き方をされたら外を読めてしまう（自分のコードを読み直して、実際に読めることを確かめました）。そこは拒否リストと許可の壁で受けることになります。
+どれも単体では抜けます。囲いの実装はこれです。
+
+```ts
+function resolveInside(p: string): string {
+  const abs = path.resolve(WORK_DIR, p);
+  if (!abs.startsWith(WORK_DIR)) {
+    throw new Error("作業フォルダの外は触れません");
+  }
+  return abs;
+}
+```
+
+`path.resolve` で `../..` を先にほどいてから判定するのが肝で、文字列のまま `..` を探しても防げません。ただし、この関所を通っているのはファイル系の3つだけです。
+
+```ts
+case "read_file": return await fs.readFile(resolveInside(input.path), "utf-8");
+case "list_files": return (await fs.readdir(resolveInside(input.dir))).join("\n");
+case "write_file":
+  await fs.writeFile(resolveInside(input.path), input.content);
+  return `書き込みました: ${input.path}`;
+```
+
+`run_command` は通っていません。作業フォルダを `cwd` に指定して走らせているだけです。
+
+```ts
+const { stdout, stderr } = await exec(command, { cwd: WORK_DIR });
+```
+
+つまり `cat ../../秘密` と書かれたら外を読めます。記事を書きながら自分のコードを読み直して気づき、実際に読み出せることも確かめました。囲いを作った気になっていたのは私のほうでした。ここは拒否リスト（`rm -rf` / `sudo` / `curl … | sh`）と許可の壁で受けることになります。
 
 穴が残るから重ねる。重ねるほうが先で、1枚を厚くするのは後、という順番でした。
 
@@ -163,6 +213,26 @@ BadRequestError 400 — tool_use ids were found without tool_result blocks
 3. コードは `stop_reason !== "tool_use"` でループを抜けていた。結果、言いかけの tool_use だけが履歴に残り、対になる tool_result が返らなかった。次の送信でAPIが400
 
 直し方は3つ。`max_tokens` を増やす。`stop_reason` を信じず「返事の中に tool_use ブロックが実際にあるか」で判断する。そして途中で切れた呼び出しは実行しないでエラーとして返す。
+
+```ts
+const toolUses = res.content.filter(
+  (b): b is Anthropic.ToolUseBlock => b.type === "tool_use"
+);
+if (toolUses.length === 0) return;          // stop_reason ではなく中身で判断する
+
+const truncated = res.stop_reason === "max_tokens";
+for (const block of toolUses) {
+  if (truncated) {
+    toolResults.push({
+      type: "tool_result",
+      tool_use_id: block.id,                 // 実行はしない。でもペアは必ず返す
+      content: "応答が長すぎて途中で切れたため実行しませんでした。作業を小さく分けてやり直してください。",
+      is_error: true,
+    });
+    continue;
+  }
+  // …ここで初めて実行
+```
 
 3つ目が肝でした。引数が不完全なまま `write_file` を実行していたら、尻切れの中身でファイルが保存されていた。ループの終了判定は「道具を使うか、使わないか」の2択ではなく、第3の状態（途中で切れた）があるんですね。
 
