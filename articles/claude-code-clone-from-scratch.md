@@ -198,8 +198,10 @@ function resolveInside(p: string): string {
 `path.resolve` で `../..` を先にほどいてから判定するのが肝で、文字列のまま `..` を探しても防げません。ただし、この関所を通っているのはファイル系の3つだけです。
 
 ```ts
-case "read_file": return await fs.readFile(resolveInside(input.path), "utf-8");
-case "list_files": return (await fs.readdir(resolveInside(input.dir))).join("\n");
+case "read_file":
+  return await fs.readFile(resolveInside(input.path), "utf-8");
+case "list_files":
+  return (await fs.readdir(resolveInside(input.dir))).join("\n");
 case "write_file":
   await fs.writeFile(resolveInside(input.path), input.content);
   return `書き込みました: ${input.path}`;
