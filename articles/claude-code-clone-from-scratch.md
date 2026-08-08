@@ -3,7 +3,7 @@ title: "Claude Codeを自作したら、特別なことは何もしていなか�
 emoji: "🛠️"
 type: "tech"
 topics: ["claudecode", "claude", "ai", "typescript", "初心者"]
-published: false
+published: true
 ---
 
 ## 毎日使っているのに、何も分かっていなかった
