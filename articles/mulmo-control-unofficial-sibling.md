@@ -1,6 +1,6 @@
 ---
 title: "Mulmo ファミリーに、非公式の新しい兄弟。Mulmo Control を作りました"
-emoji: "📦"
+emoji: "🎛️"
 type: "tech"
 topics: ["macos", "swift", "claudecode", "個人開発", "初心者"]
 published: true
