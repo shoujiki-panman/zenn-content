@@ -122,7 +122,8 @@ npmでの配布は済ませ（`npm install -g @shoujiki-panman/session-relay` �
 
 ```sh
 npm install -g @shoujiki-panman/session-relay
-relay install
+relay install   # MCPと「続きから」スキルをまとめて登録
+relay doctor    # 登録と生存の検査。繋がらない時もまずこれ
 ```
 
 https://github.com/shoujiki-panman/session-relay
