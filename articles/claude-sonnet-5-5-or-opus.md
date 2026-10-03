@@ -131,18 +131,3 @@ Anthropicは約1,850の場面で振る舞いを調べ、利用者の意図に反
 
 - [Introducing Claude Sonnet 5.5（Anthropic、2026年9月28日）](https://www.anthropic.com/claude-sonnet-5-5)
 - [Claude Sonnet 5.5（開発者向けの説明）](https://platform.claude.com/docs/en/models/sonnet-5-5/overview)
-
-## 宣伝：続きを別のモデルに渡すならsession-relay
-
-session-relayは、新しいチャットに「続きから」と打つだけで、前の会話を引き継ぐ道具です。新しいAIが前の会話を自分で読みに行き、続きから始めます。9月の更新で、続きを渡すAIの種類（モデル）を指定できるようになりました。
-
-入れ方は、ターミナルで次の2行です。
-
-```
-npm install -g @shoujiki-panman/session-relay
-relay install
-```
-
-詳しくは[前に書いた記事](https://zenn.dev/shoujiki_panman/articles/session-relay-no-handoff)にまとめています。
-
-https://github.com/shoujiki-panman/session-relay
