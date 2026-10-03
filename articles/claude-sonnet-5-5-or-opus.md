@@ -3,7 +3,7 @@ title: "Opus 5.5とSonnet 5.5、どっちを使う？ 新しいSonnet 5.5を数�
 emoji: "⚖️"
 type: "tech"
 topics: ["claude", "claudecode", "ai", "llm"]
-published: false
+published: true
 ---
 
 ## 本記事について

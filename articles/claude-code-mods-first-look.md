@@ -3,7 +3,7 @@ title: "Claude Codeに「mod」が来た。危ないコマンドを止める機�
 emoji: "🧩"
 type: "tech"
 topics: ["claudecode", "claude", "ai", "typescript"]
-published: false
+published: true
 ---
 
 ## 本記事について
