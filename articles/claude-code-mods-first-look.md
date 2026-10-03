@@ -14,12 +14,12 @@ published: true
 
 1つ目は利用上限です。作業の途中で上限に達すると、Claudeはそこで止まります。あとどれくらい使えるかは、ふだんの画面には出ていません。そこで、入力欄の上に上限のメーターを出すmodを作りました。上限が近いときは、Claudeにも作業を区切らせます。
 
-2つ目はAPIキーです。Claudeに`.env`を読ませると、中のキーやパスワードもそのままAIに送られます。そこで、Claudeが読む前に伏せるmodを作りました。
+2つ目はAPIキーです。`.env`は、Claudeに読ませない設定にできます。それでも、PATHを確かめるつもりで`env`を実行させると、環境変数に入れたキーはそのままClaudeに渡ります。そこで、Claudeが読む前に伏せるmodを作りました。
 
 ![上限が92%のとき、Claudeが作業の区切り方を先に出した画面](/images/claude-code-mods-first-look/meter-opus.png)
 *上限メーターを入れ、5時間枠を試しに92%として表示した画面。大きな作り直しを頼むと、Claudeは書き換える前に区切り方を出した（Claudeの返事は実際のもの）*
 
-どちらもGitHubに置いてあり、Claude Codeでコマンドを3行打てば入ります。有料プランでClaude Codeを使っていて、上限で作業を止められたことがある方や、Claudeに設定ファイルを読ませるのが少し不安な方向けです。
+どちらもGitHubに置いてあり、Claude Codeでコマンドを3行打てば入ります。有料プランでClaude Codeを使っていて、上限で作業を止められたことがある方や、APIキーがClaudeに渡っていないか気になる方向けです。
 
 https://github.com/shoujiki-panman/claude-code-mods
 
@@ -28,7 +28,7 @@ https://github.com/shoujiki-panman/claude-code-mods
 | mod | 困っていたこと | 入れるとどうなるか |
 |---|---|---|
 | limit-meter | あとどれくらい使えるか分からないまま、上限で止まる | 5時間枠と週の枠の使った割合とリセットの時刻が、入力欄の上に出る。上限が近いと知らせが出て、Claudeも作業を区切る |
-| secret-mask | `.env`を読ませると、キーやパスワードもAIに送られる | Claudeが読む前に、キーやパスワードを`[MASKED]`に置き換える |
+| secret-mask | `.env`を読ませない設定にしても、`env`の結果などに混じったキーはAIに送られる | Claudeが読む前に、キーやパスワードを`[MASKED]`に置き換える |
 
 ## 構成
 
@@ -84,14 +84,28 @@ Claudeの有料プランには、5時間ごとの上限と、1週間ごとの上
 
 ## 3. APIキーの伏せ字（secret-mask）
 
-### Claudeが読む前に、キーとパスワードを伏せる
+### まず、.envは読ませない設定にする
 
-![modなしではキーとパスワードがそのまま、secret-maskを入れると[MASKED]になる](/images/claude-code-mods-first-look/mask-compare.png)
-*同じ`.env`を、modなし（上）とsecret-maskを入れたとき（下）で書き写させた画面。値は記事のための偽物*
+APIキーを守る基本は、`.env`をClaudeに読ませないことです。Claude Codeの設定ファイル（`.claude/settings.json`）に、次のように書きます。
 
-Claudeに`.env`を読ませて中身を書き写させると、modなしではキーもパスワードもそのまま返ってきます。Claudeが読んだということは、その値がAIに送られたということです。
+```json
+{
+  "permissions": {
+    "deny": ["Read(./.env)", "Read(./.env.*)"]
+  }
+}
+```
 
-secret-maskを入れると、Claudeに届く前に、キーとパスワードが`[MASKED]`に置き換わります。`cat`で表示させても、Readツールで読ませても同じでした。`MAX_TOKENS=4096`のような、秘密ではない設定はそのまま残ります。
+この設定を入れて試すと、Claudeは`.env`を読めませんでした。Readツールで読ませても、`cat`で表示させても断られます。
+
+### それでも、キーは混じる
+
+![.envを読ませない設定でも、envの結果からキーが渡る。secret-maskを入れると[MASKED]になる](/images/claude-code-mods-first-look/mask-env.png)
+*`.env`を読ませない設定のまま、`env`を実行させてキーの行を書き写させた画面。modなし（上）とsecret-maskを入れたとき（下）。値は記事のための偽物*
+
+この設定で止まるのは、ファイルを読むことです。PATHを確かめるつもりで`env`を実行させると、環境変数に入れたAPIキーも一緒に出力され、そのままClaudeに渡りました。Claudeが読んだということは、その値がAIに送られたということです。
+
+secret-maskを入れると、Claudeに届く前に、キーが`[MASKED]`に置き換わります。コマンドの結果のほか、読んだファイルや添付も対象です。`MAX_TOKENS=4096`のような、秘密ではない設定はそのまま残ります。
 
 ### 伏せるもの
 
@@ -105,6 +119,7 @@ secret-maskを入れると、Claudeに届く前に、キーとパスワードが
 
 ### ポイント
 
+- 伏せ字は安全網です。`.env`を読ませない設定と一緒に使ってください
 - キーは`sk-`や`ghp_`のような頭の部分だけ残し、どのキーかは分かるようにしています
 - 伏せたときは、結果の最後に「値を読まずに使う方法を選んで」という一文を添えて、Claudeに伝えます
 - `password: string`のような型や、`process.env.API_KEY`のようなコードは伏せません。Claudeがコードを読み違えないようにするためです
@@ -152,8 +167,8 @@ modは隔離されずに、Claude Codeと同じ権限で動きます。ファイ
 |---|---|
 | 上限で、作業の途中に止められたことがある | limit-meter |
 | 大きな作業を頼む前に、上限の残りを見たい | limit-meter |
-| `.env`や設定ファイルをClaudeに読ませることがある | secret-mask |
-| `env`や`docker inspect`の結果をClaudeに見せることがある | secret-mask |
+| `.env`をClaudeに読ませたくない | modではなく、設定の`permissions.deny`に`Read(./.env)`を入れる |
+| `env`やログの結果を、Claudeに見せることがある | secret-mask |
 
 ## 参考
 
