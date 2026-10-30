@@ -3,7 +3,7 @@ title: "会話を引き継ぐ道具を4つ読み比べたら、自分の道具�
 emoji: "🔑"
 type: "tech"
 topics: ["claudecode", "codex", "mcp", "chatgpt", "ai"]
-published: true
+published: false
 ---
 
 AIの会話を別のAIへ引き継ぐ道具を、自分の session-relay を含めて4つ、READMEで読み比べました。ChatGPTのdots（常に動いているエージェント）から会話を預けられるのは、session-relay だけでした。一方で、会話に混ざったAPIキーを伏せていないのも、session-relay だけでした。
