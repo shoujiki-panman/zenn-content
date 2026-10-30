@@ -24,6 +24,8 @@ session-relay は新しいチャットで「続きから」と言うと、前の
 
 chatgpt.com のプラグイン画面で「追加」から「カスタム MCP サーバーを追加」を選び、そこに足し直すと、ちゃまから呼べるようになりました。2回目は、非公開のGitHubのURLが中身に入っていたので、ChatGPTが「送ってよいか」を確かめてきました。URLを抜いて預け直すと、Macに届きました。Macで預かった会話の一覧を見ると、dotsに付けさせた題名「ちゃまからの試し」で並んでいました。
 
+![chatgpt.comのプラグイン画面。「追加」を開くと「カスタム MCP サーバーを追加」がある](/images/session-relay-compare/chatgpt-add-custom-mcp.png)
+
 では、ほかの引き継ぎ道具はどうなっているのか。
 
 ## 同じことをする道具は、ほかにもあった
@@ -64,8 +66,21 @@ session-relay が読むのは、まさにその手元の記録です。それを
 
 足したのは、渡す直前に鍵の形をした文字列を置き換える処理です（[PR #22](https://github.com/shoujiki-panman/session-relay/pull/22)）。
 
+試しに、偽物のOpenAIの鍵とGitHubのトークンを入れた会話を預けて、0.4.2 で読み出しました。預けたのはこういう会話です。
+
 ```
-この鍵を使って: [伏せた: GitHubのトークン] で試した
+このキーで動かして sk-proj-XXXXXXXX…（偽物の鍵）
+ghp_YYYYYYYY…（偽物のトークン） で push した
+```
+
+読み出すと、こうなります。
+
+```
+## 本人が実際に打った言葉（時系列・全件）
+1. このキーで動かして [伏せた: OpenAIの鍵]
+
+## 直近の経過
+1. [伏せた: GitHubのトークン] で push した
 ```
 
 伏せるのは、Anthropic・OpenAI・GitHub・npm・AWS・Google・Slack・Stripeの鍵、JWT、Bearerトークン、秘密鍵です。かけるのは、前の会話の文脈、預けた会話、MCPの返事すべての3か所です。手元の記録そのものは書き換えません。
@@ -101,6 +116,8 @@ npm error notarget No matching version found for @shoujiki-panman/session-relay@
 session-relay は Claude Code のプラグインとしても入れられるようにしました（[PR #19](https://github.com/shoujiki-panman/session-relay/pull/19)）。Anthropic のプラグイン一覧（Anthropic Directory）にも、10月8日に提出しています。
 
 提出前の検査は通りました。ただ、MCPを `npx` で起動する作りなので、Anthropic の担当者が中身を読むまで公開されません。10月30日の時点ではまだ審査中です。
+
+![Anthropicの開発者ポータルの申請一覧。session-relayが「レビュー中」になっている](/images/session-relay-compare/directory-under-review.png)
 
 提出の画面には「プラグインのプライバシーポリシーが、扱うデータを正確に説明している」という確認がありました。session-relay にはまだプライバシーポリシーがありませんでした。なので、提出の前に書きました（[PRIVACY.md](https://github.com/shoujiki-panman/session-relay/blob/main/PRIVACY.md)）。今回の伏せる処理もそこに書き足しています。
 
